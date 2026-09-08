@@ -1,7 +1,8 @@
 {
   "scripts": {
-    "setup": { "enabled": false },
-    "run": { "enabled": false },
+    "setup": { "enabled": true, "command": "python3 scripts/setup.py" },
+    "run": { "enabled": true, "command": ".venv/bin/python scripts/preview.py" },
     "archive": { "enabled": false }
-  }
+  },
+  "ports": { "preview": 3000 }
 }

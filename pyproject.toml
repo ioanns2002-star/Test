@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentbridge"
+version = "0.1.0"
+description = "A stateless encrypted WebSocket bridge to a visible Windows tray agent"
+requires-python = ">=3.11"
+dependencies = ["websockets==17.1", "cryptography==50.0.1"]
+
+[project.optional-dependencies]
+windows = ["pystray==0.19.5", "Pillow==12.3.0"]
+build = ["pyinstaller==6.22.2"]
+
+[project.scripts]
+agentbridge = "agentbridge.controller:main"
+agentbridge-relay = "agentbridge.relay:main"
+agentbridge-desktop = "agentbridge.tray:main"
+
+[tool.setuptools.packages.find]
+include = ["agentbridge*"]

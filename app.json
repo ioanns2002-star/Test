@@ -1,0 +1,23 @@
+{
+  "name": "AgentBridge",
+  "description": "A single-PC encrypted WebSocket relay. No database or server-side file storage.",
+  "repository": "https://github.com/ioanns2002-star/Test",
+  "stack": "heroku-24",
+  "buildpacks": [{ "url": "heroku/python" }],
+  "formation": { "web": { "quantity": 1, "size": "basic" } },
+  "env": {
+    "BRIDGE_DEVICE_TOKEN": {
+      "description": "Relay access token for the Windows tray client. Keep private.",
+      "generator": "secret"
+    },
+    "BRIDGE_CONTROLLER_TOKEN": {
+      "description": "Different relay access token for the controller. Keep private.",
+      "generator": "secret"
+    },
+    "WEB_CONCURRENCY": {
+      "description": "This intentionally stateless single-PC relay runs one process on one dyno.",
+      "value": "1"
+    }
+  },
+  "addons": []
+}

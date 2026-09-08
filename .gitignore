@@ -10,4 +10,12 @@ __pycache__/
 .hoplite/*
 !.hoplite/settings.json
 build/
-godot/.godot/
+*.egg-info/
+.private/
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.spec
+.pytest_cache/
