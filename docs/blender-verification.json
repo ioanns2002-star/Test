@@ -1,0 +1,26 @@
+{
+  "verifiedAt": "2026-09-08T01:04:31.282187+00:00",
+  "blenderVersion": "4.5.3 LTS",
+  "file": "public/downloads/rain-gallery.blend",
+  "editableMeshes": 1868,
+  "packedImages": 26,
+  "materials": 32,
+  "camera": "Camera_Reference",
+  "renderEngine": "CYCLES",
+  "resolution": [
+    1470,
+    1050
+  ],
+  "cyclesSamples": 160,
+  "rainParticlesConfigured": 6500,
+  "rainParticlesEvaluated": 6500,
+  "checks": [
+    "Saved .blend opens in a fresh process",
+    "Textures are packed",
+    "All mesh coordinates finite",
+    "Mesh UV maps present",
+    "Reference camera selected",
+    "Reference not used as a backdrop",
+    "Native rain particle system configured"
+  ]
+}

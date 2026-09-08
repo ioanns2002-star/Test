@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#091215" />
+    <meta
+      name="description"
+      content="Интерактивный просмотр 3D-реконструкции дождливой галереи."
+    />
+    <title>Rain Gallery — 3D reconstruction</title>
+  </head>
+  <body>
+    <main class="viewer-shell" aria-label="Интерактивный просмотр 3D-сцены">
+      <canvas id="scene-canvas" tabindex="0" aria-label="Интерактивная 3D-сцена дождливой галереи"></canvas>
+
+      <section id="static-fallback" class="static-fallback" hidden aria-labelledby="fallback-title">
+        <img id="fallback-image" alt="Статический Blender-рендер сцены" />
+        <div class="fallback-scrim"></div>
+        <div class="fallback-copy">
+          <p class="eyebrow">СТАТИЧЕСКИЙ BLENDER-РЕНДЕР · НЕ REALTIME</p>
+          <h1 id="fallback-title">3D-просмотр недоступен</h1>
+          <p id="fallback-description">Проверяем локальные файлы сцены.</p>
+          <button id="fallback-retry" class="button button-primary" type="button">Повторить загрузку</button>
+        </div>
+      </section>
+
+      <div class="atmosphere-grain" aria-hidden="true"></div>
+
+      <div class="interface">
+        <header class="topbar">
+          <div class="identity">
+            <span class="identity-mark" aria-hidden="true"></span>
+            <div>
+              <p class="eyebrow">RAIN GALLERY / РЕКОНСТРУКЦИЯ</p>
+              <h1 id="scene-title">Дождливая галерея</h1>
+            </div>
+          </div>
+          <div id="scene-state-badge" class="realtime-badge is-loading" role="status" aria-live="polite" aria-atomic="true" title="Загружаем интерактивную GLB-сцену.">
+            <span class="live-dot" aria-hidden="true"></span>
+            <span id="scene-state-label">ЗАГРУЗКА 3D · GLB</span>
+          </div>
+        </header>
+
+        <section class="view-readout" aria-label="Состояние сцены">
+          <span class="readout-label">ВИД</span>
+          <strong id="view-status">Подготовка сцены</strong>
+          <span id="scene-version" class="muted-readout">—</span>
+        </section>
+
+        <aside id="control-panel" class="control-panel" aria-labelledby="controls-title">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">ИНСТРУМЕНТЫ ПРОСМОТРА</p>
+              <h2 id="controls-title">Камера и атмосфера</h2>
+            </div>
+            <button id="help-button" class="icon-button" type="button" aria-expanded="false" aria-controls="help-drawer" aria-label="Открыть помощь">?</button>
+          </div>
+
+          <div class="control-group mode-group" role="group" aria-label="Режим управления камерой">
+            <button class="mode-button is-active" type="button" data-mode="orbit" aria-pressed="true">
+              <span class="mode-symbol" aria-hidden="true">◌</span> Орбита
+            </button>
+            <button class="mode-button" type="button" data-mode="walk" aria-pressed="false">
+              <span class="mode-symbol" aria-hidden="true">↗</span> Прогулка
+            </button>
+          </div>
+
+          <div class="control-group exposure-control">
+            <div class="control-label">
+              <label for="exposure">Экспозиция</label>
+              <output id="exposure-value" for="exposure">1,00</output>
+            </div>
+            <input id="exposure" type="range" min="0.4" max="2.2" step="0.01" value="1" />
+          </div>
+
+          <div class="control-group switches">
+            <label class="switch-row" for="rain-toggle">
+              <span><strong>Дождь</strong><small>частицы в реальном времени</small></span>
+              <input id="rain-toggle" type="checkbox" checked />
+              <span class="switch" aria-hidden="true"></span>
+            </label>
+            <label class="switch-row" for="motion-toggle">
+              <span><strong>Движение</strong><small id="motion-description">мягкая анимация</small></span>
+              <input id="motion-toggle" type="checkbox" checked />
+              <span class="switch" aria-hidden="true"></span>
+            </label>
+            <label class="switch-row" for="bloom-toggle">
+              <span><strong>Свечение</strong><small>сдержанный bloom</small></span>
+              <input id="bloom-toggle" type="checkbox" checked />
+              <span class="switch" aria-hidden="true"></span>
+            </label>
+          </div>
+
+          <div class="control-group action-grid">
+            <button id="reset-view" class="button button-secondary" type="button">Сбросить вид</button>
+            <button id="screenshot" class="button button-secondary" type="button">Снимок PNG</button>
+            <button id="fullscreen" class="button button-secondary action-wide" type="button">На весь экран</button>
+          </div>
+
+          <div class="panel-footer">
+            <span class="status-pulse" aria-hidden="true"></span>
+            <span id="asset-status">Ожидание манифеста…</span>
+          </div>
+        </aside>
+
+        <section id="loading-card" class="loading-card" aria-live="polite" aria-labelledby="loading-title">
+          <div class="loading-rain" aria-hidden="true"><i></i><i></i><i></i></div>
+          <p class="eyebrow">3D-ПРОСМОТР</p>
+          <h2 id="loading-title">Собираем галерею</h2>
+          <p id="loading-message">Читаем манифест сцены…</p>
+          <div class="progress-track"><div id="loading-progress" class="progress-value"></div></div>
+          <p id="loading-detail" class="loading-detail">Это может занять несколько секунд.</p>
+        </section>
+
+        <section id="error-card" class="error-card" hidden aria-live="assertive" aria-labelledby="error-title">
+          <p class="eyebrow">ЗАГРУЗКА ПРЕРВАНА</p>
+          <h2 id="error-title">Не удалось открыть 3D-сцену</h2>
+          <p id="error-message">Проверьте, что файлы сцены доступны.</p>
+          <div class="error-actions">
+            <button id="retry-load" class="button button-primary" type="button">Повторить</button>
+            <button id="error-show-compare" class="button button-secondary" type="button">Открыть сравнение</button>
+          </div>
+        </section>
+
+        <div class="bottom-actions">
+          <button id="comparison-button" class="comparison-button" type="button" aria-expanded="false" aria-controls="comparison-panel">
+            <span class="comparison-icon" aria-hidden="true">▣</span>
+            Сверить с референсом
+          </button>
+          <button id="download-button" class="download-button" type="button" aria-expanded="false" aria-controls="download-menu">
+            Скачать файлы <span aria-hidden="true">↓</span>
+          </button>
+          <div id="download-menu" class="download-menu" hidden>
+            <a href="downloads/rain-gallery.blend" download>Blender-проект <small>.blend</small></a>
+            <a href="assets/rain-gallery.glb" data-download="model" download>3D-модель <small>.glb</small></a>
+            <a href="assets/beauty.webp" data-download="beauty" download>Blender-рендер <small>.webp</small></a>
+            <a href="downloads/godot-gallery.zip" download>Godot-сцена <small>.zip</small></a>
+            <a href="downloads/gallery-offline.html" download>Оффлайн viewer <small>.html</small></a>
+          </div>
+        </div>
+
+        <section id="comparison-panel" class="comparison-panel" hidden aria-labelledby="comparison-title">
+          <div class="comparison-header">
+            <div>
+              <p class="eyebrow">КОНТРОЛЬ СООТВЕТСТВИЯ</p>
+              <h2 id="comparison-title">Референс и Blender-рендер</h2>
+            </div>
+            <div class="comparison-controls">
+              <div class="segmented" role="group" aria-label="Способ сравнения">
+                <button type="button" class="compare-mode is-active" data-compare-mode="split" aria-pressed="true">Рядом</button>
+                <button type="button" class="compare-mode" data-compare-mode="slider" aria-pressed="false">Слайдер</button>
+              </div>
+              <button id="close-comparison" class="icon-button" type="button" aria-label="Закрыть сравнение">×</button>
+            </div>
+          </div>
+
+          <div id="comparison-split" class="comparison-split">
+            <figure class="comparison-figure">
+              <figcaption><span>ИСХОДНОЕ ИЗОБРАЖЕНИЕ</span><small id="reference-file-label">reference.jpg · не realtime</small></figcaption>
+              <div class="comparison-image-wrap"><img id="reference-image" alt="Исходное изображение дождливой галереи" /></div>
+            </figure>
+            <figure class="comparison-figure">
+              <figcaption><span>СТАТИЧЕСКИЙ РЕНДЕР ИЗ BLENDER</span><small id="beauty-file-label">beauty.webp · не realtime</small></figcaption>
+              <div class="comparison-image-wrap"><img id="beauty-image" alt="Статический Blender-рендер дождливой галереи" /></div>
+            </figure>
+          </div>
+
+          <div id="comparison-slider-view" class="comparison-slider-view" hidden>
+            <div id="slider-images" class="slider-images">
+              <img id="slider-reference-image" alt="Исходное изображение" />
+              <div id="slider-overlay" class="slider-overlay">
+                <img id="slider-beauty-image" alt="Статический Blender-рендер" />
+              </div>
+              <span class="slider-label slider-label-reference">РЕФЕРЕНС</span>
+              <span class="slider-label slider-label-beauty">BLENDER · СТАТИЧЕСКИЙ</span>
+              <span id="slider-handle" class="slider-handle" aria-hidden="true"></span>
+              <input id="comparison-range" type="range" min="0" max="100" value="50" aria-label="Положение слайдера сравнения" />
+            </div>
+          </div>
+          <p class="comparison-note">Интерактивная сцена выше загружается из GLB. Здесь показаны только исходный референс и отдельный статический рендер Blender.</p>
+        </section>
+
+        <section id="help-drawer" class="help-drawer" hidden aria-labelledby="help-title">
+          <div class="help-header">
+            <div>
+              <p class="eyebrow">БЫСТРАЯ НАВИГАЦИЯ</p>
+              <h2 id="help-title">Как смотреть сцену</h2>
+            </div>
+            <button id="close-help" class="icon-button" type="button" aria-label="Закрыть помощь">×</button>
+          </div>
+          <dl>
+            <div><dt>Орбита</dt><dd>Тяните сцену мышью или пальцем, колесо меняет дистанцию.</dd></div>
+            <div><dt>Прогулка</dt><dd>Зажмите и тяните для обзора; <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> — движение. Камера остаётся внутри границ сцены.</dd></div>
+            <div><dt>Точный кадр</dt><dd>«Сбросить вид» возвращает камеру из <code>scene-manifest.json</code>.</dd></div>
+            <div><dt>Меньше движения</dt><dd>Системная настройка reduced motion выключает анимацию по умолчанию; её можно включить вручную.</dd></div>
+          </dl>
+        </section>
+
+        <div id="toast" class="toast" role="status" aria-live="polite"></div>
+      </div>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

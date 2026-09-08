@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "setup": "bash scripts/setup.sh",
+    "run": "npm run dev"
+  },
+  "ports": {
+    "preview": 3000
+  }
+}
