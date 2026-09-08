@@ -8,6 +8,8 @@
 
 ## Что открыть
 
+**[Скачать весь готовый проект ZIP](https://github.com/ioanns2002-star/Test/archive/refs/tags/rain-gallery-v1.zip)** · [Страница релиза](https://github.com/ioanns2002-star/Test/releases/tag/rain-gallery-v1)
+
 | Файл | Как использовать |
 | --- | --- |
 | [rain-gallery.blend](public/downloads/rain-gallery.blend) | Открыть в **Blender 4.5 LTS**. Все текстуры упакованы внутрь. |
@@ -15,7 +17,7 @@
 | [godot-gallery.zip](public/downloads/godot-gallery.zip) | Распаковать, импортировать `project.godot` в **Godot 4.4+**, нажать `F5`. Проверено в 4.4.1. |
 | [rain-gallery.glb](public/assets/rain-gallery.glb) | Самодостаточная glTF-модель для импорта в другие 3D-программы и движки. |
 
-В GitHub используйте **Download raw file** на странице выбранного файла. Либо скачайте весь проект через **Code → Download ZIP** именно с ветки этой реконструкции. Размеры и SHA-256 файлов записаны в [каталоге артефактов](public/assets/artifact-manifest.json).
+В GitHub используйте **Download raw file** на странице выбранного файла. Полный ZIP релиза содержит готовые файлы, исходники и инструкции. Размеры и SHA-256 файлов записаны в [каталоге артефактов](public/assets/artifact-manifest.json).
 
 ### Blender
 
@@ -76,5 +78,8 @@ npm run build
 - `verify:artifacts` проверяет форматы, контрольные суммы и согласованность GLB, Godot ZIP и офлайн-ресурсов.
 - [Blender-отчёт](docs/blender-verification.json) получен открытием сохранённого `.blend` в отдельном процессе: проверяются текстуры, UV, геометрия, камера и система частиц.
 - CI проверяет веб-тесты, glTF и готовые файлы; тяжёлый Cycles-рендер в CI не запускается.
+
+При пересборке отдельных артефактов обновите каталог командой `npm run build:catalog`.
+Обычная проверка его не переписывает и отклоняет устаревшие SHA-256, HTML и ZIP.
 
 Материалы и PBR-карты созданы процедурно для этой сцены; сторонних пакетов ассетов и CDN нет. Исходное изображение предоставлено пользователем; отдельная открытая лицензия на фотографию не заявляется.

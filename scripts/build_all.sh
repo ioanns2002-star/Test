@@ -23,6 +23,7 @@ npm run validate:model
 npm run build
 npm run build:offline
 python3 scripts/package_godot.py
+npm run build:catalog
 npm run verify:artifacts
 npm run build
 printf '%s\n' 'Scene, render views, standalone HTML, Godot ZIP and dist/ are ready.'

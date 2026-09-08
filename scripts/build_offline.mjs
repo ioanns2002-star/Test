@@ -21,14 +21,15 @@ for (const [tag, path] of scripts) {
   const js = await readFile(resolve(dist, path.replace(/^\.\//, '')), 'utf8');
   html = html.replace(tag, '');
   const safeJson = JSON.stringify(embed).replace(/</g, '\\u003c');
-  const safeScript = js.replace(/<\/script/gi, '<\\/script');
-  html = html.replace('</body>', `<script>window.__SCENE_EMBED__=${safeJson};</script>\n<script type="module">${safeScript}</script>\n</body>`);
+  const safeScript = js.replace(/<\/script/gi, (match) => match.replace('/', '\\/'));
+  // A callback keeps $` and other replacement tokens inside bundled code literal.
+  html = html.replace('</body>', () => `<script>window.__SCENE_EMBED__=${safeJson};</script>\n<script type="module">${safeScript}</script>\n</body>`);
 }
 for (const [tag, path] of [...html.matchAll(/<link\b[^>]*rel="stylesheet"[^>]*href="([^"]+)"[^>]*>/g)]) {
   const css = await readFile(resolve(dist, path.replace(/^\.\//, '')), 'utf8');
-  html = html.replace(tag, `<style>${css}</style>`);
+  html = html.replace(tag, () => `<style>${css}</style>`);
 }
-const github = 'https://github.com/ioanns2002-star/Test/blob/hoplite/lokroi-0630821b/public/downloads/';
+const github = 'https://github.com/ioanns2002-star/Test/blob/rain-gallery-v1/public/downloads/';
 html = html.replace(/href="(?:\.?\/?downloads\/)(rain-gallery\.blend|godot-gallery\.zip|gallery-offline\.html)"/g, (_, name) => `href="${github}${name}" target="_blank" rel="noopener"`);
 html = html.replace('<title>', '<title>Offline · ');
 if (/<script\b[^>]*src=|<link\b[^>]*rel="stylesheet"/i.test(html)) throw new Error('Offline page still depends on external JS or CSS');

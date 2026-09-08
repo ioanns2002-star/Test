@@ -108,6 +108,7 @@ const state = {
   bloomPass: null,
   pmrem: null,
   environmentTarget: null,
+  reflectionTarget: null,
   root: null,
   rain: null,
   mixer: null,
@@ -665,10 +666,10 @@ function addSceneLights(bounds, lighting) {
   const center = bounds.getCenter(new THREE.Vector3());
   const span = Math.max(size.x, size.y, size.z, 8);
 
-  const overcast = new THREE.HemisphereLight(0xadb8c9, 0x263237, 0.40);
+  const overcast = new THREE.HemisphereLight(0xadb8c9, 0x263237, 0.10);
   state.scene.add(overcast);
 
-  const skyLight = new THREE.DirectionalLight(0xbdc9d4, 1.0);
+  const skyLight = new THREE.DirectionalLight(0xbdc9d4, 0.25);
   skyLight.position.set(12, 18, 8);
   skyLight.target.position.copy(center);
   skyLight.castShadow = true;
@@ -689,14 +690,14 @@ function addSceneLights(bounds, lighting) {
   state.scene.add(corridorFill);
 
   if (lighting?.exitLight) {
-    const exitLight = new THREE.PointLight(0xa9ce83, 0.12, 2.5, 2);
+    const exitLight = new THREE.PointLight(0xa9ce83, 0.60, 2.5, 2);
     exitLight.name = 'Exit_sign_light';
     exitLight.position.fromArray(lighting.exitLight);
     state.scene.add(exitLight);
   }
 
   lighting?.stepLights?.forEach((position, index) => {
-    const stepLight = new THREE.PointLight(0xb1c794, 0.025, 1.2, 2);
+    const stepLight = new THREE.PointLight(0xb1c794, 0.45, 1.8, 2);
     stepLight.name = `Step_light_${index + 1}`;
     stepLight.position.fromArray(position);
     state.scene.add(stepLight);
@@ -809,7 +810,7 @@ function initializeRenderer(manifest) {
   const environment = new RoomEnvironment();
   state.environmentTarget = state.pmrem.fromScene(environment, 0.035);
   state.scene.environment = state.environmentTarget.texture;
-  state.scene.environmentIntensity = 0.12;
+  state.scene.environmentIntensity = 0.04;
 
   const bounds = new THREE.Box3(
     new THREE.Vector3().fromArray(manifest.bounds.min),
@@ -840,7 +841,7 @@ function initializeRenderer(manifest) {
     requestRender();
   });
   state.walk.syncFromCamera(pose.target);
-  state.walk.setEnabled(false);
+  updateMode(state.mode, { notify: false });
 
   state.composer = new EffectComposer(state.renderer);
   state.composer.addPass(new RenderPass(state.scene, state.camera));
@@ -855,6 +856,33 @@ function initializeRenderer(manifest) {
   state.composer.addPass(new OutputPass());
 }
 
+function captureWetFloorReflections() {
+  const target = new THREE.WebGLCubeRenderTarget(128, {
+    type: THREE.HalfFloatType,
+    generateMipmaps: true,
+    minFilter: THREE.LinearMipmapLinearFilter
+  });
+  const probe = new THREE.CubeCamera(0.06, state.manifest.camera.far, target);
+  const { min, max } = state.manifest.bounds;
+  probe.position.set((min[0] + max[0]) / 2, 0.20, (min[2] + max[2]) / 2);
+  const rainVisible = state.rain.object.visible;
+  state.rain.object.visible = false;
+  probe.update(state.renderer, state.scene);
+  state.rain.object.visible = rainVisible;
+  state.reflectionTarget = target;
+  // A local probe reflects the actual gallery, not a photographic floor texture.
+  state.root.traverse((object) => {
+    const materials = Array.isArray(object.material) ? object.material : [object.material];
+    for (const material of materials) {
+      if (material && /^(Floor|Puddle) ·/.test(material.name)) {
+        material.envMap = target.texture;
+        material.envMapIntensity = 0.9;
+        material.needsUpdate = true;
+      }
+    }
+  });
+}
+
 function setupModel(gltf) {
   if (!gltf?.scene) {
     throw new SceneLoadError('GLB открыт, но не содержит сцену.');
@@ -863,6 +891,8 @@ function setupModel(gltf) {
   state.root = gltf.scene;
   setModelShadows(state.root);
   state.scene.add(state.root);
+  captureWetFloorReflections();
+  if (!gltf.animations?.length) state.renderer.shadowMap.autoUpdate = false;
 
   if (gltf.animations?.length) {
     state.mixer = new THREE.AnimationMixer(state.root);
@@ -889,7 +919,7 @@ function statsSummary(stats) {
   return parts.length ? `GLB · ${parts.join(' · ')}` : 'GLB загружен · параметры камеры из манифеста';
 }
 
-function updateMode(mode) {
+function updateMode(mode, { notify = true } = {}) {
   if (!['orbit', 'walk'].includes(mode)) {
     return;
   }
@@ -921,7 +951,7 @@ function updateMode(mode) {
   }
 
   updateViewStatus();
-  showToast(mode === 'walk' ? 'Прогулка: тяните для обзора, затем W A S D.' : 'Режим орбиты включён.');
+  if (notify) showToast(mode === 'walk' ? 'Прогулка: тяните для обзора, затем W A S D.' : 'Режим орбиты включён.');
   requestRender(2);
 }
 
@@ -937,12 +967,12 @@ function renderFrame() {
   }
 }
 
-function queueAnimationFrame() {
+function queueAnimationFrame(resetClock = false) {
   if (!state.isReady || !state.isPageVisible || state.animationFrame) {
     return;
   }
 
-  state.lastFrameTime = performance.now();
+  if (resetClock) state.lastFrameTime = performance.now();
   state.animationFrame = window.requestAnimationFrame(animate);
 }
 
@@ -953,7 +983,7 @@ function requestRender(frames = 1) {
 
   const requestedFrames = Number.isFinite(frames) ? Math.max(1, Math.ceil(frames)) : 1;
   state.pendingFrames = Math.max(state.pendingFrames, requestedFrames);
-  queueAnimationFrame();
+  queueAnimationFrame(true);
 }
 
 function shouldContinueRendering() {
@@ -1085,6 +1115,7 @@ function teardownScene() {
   }
 
   state.environmentTarget?.dispose();
+  state.reflectionTarget?.dispose();
   state.pmrem?.dispose();
   state.composer?.dispose?.();
   state.renderer?.renderLists?.dispose?.();
@@ -1099,6 +1130,7 @@ function teardownScene() {
   state.bloomPass = null;
   state.pmrem = null;
   state.environmentTarget = null;
+  state.reflectionTarget = null;
   state.root = null;
   state.rain = null;
   state.mixer = null;
@@ -1229,6 +1261,14 @@ function getDiagnostics() {
     ready: state.isReady,
     source: state.source ? (state.source.embedded ? 'embedded' : 'network') : null,
     lastError: state.lastError,
+    mode: state.mode,
+    motionEnabled: state.motionEnabled,
+    camera: state.camera ? {
+      position: state.camera.position.toArray(),
+      direction: state.camera.getWorldDirection(new THREE.Vector3()).toArray(),
+      fov: state.camera.fov,
+      matchingView: state.matchingView
+    } : null,
     renderLoop: {
       pageVisible: state.isPageVisible,
       queued: Boolean(state.animationFrame),
@@ -1250,6 +1290,7 @@ function getDiagnostics() {
       maxY: state.rain.maxY
     } : null,
     renderer: rendererInfo ? {
+      frame: rendererInfo.render?.frame ?? null,
       calls: rendererInfo.render?.calls ?? null,
       triangles: rendererInfo.render?.triangles ?? null,
       lines: rendererInfo.render?.lines ?? null,

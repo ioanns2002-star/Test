@@ -688,7 +688,7 @@ def export_model(scene):
         total_triangles += sum(len(p.vertices) - 2 for p in data.polygons)
     scene.camera.select_set(True)
     bpy.context.view_layer.objects.active = scene.camera
-    bpy.ops.export_scene.gltf(filepath=str(ASSETS / "rain-gallery.glb"), export_format="GLB", use_selection=True, export_yup=True, export_cameras=True, export_lights=False, export_animations=False, export_extras=True, export_materials="EXPORT")
+    bpy.ops.export_scene.gltf(filepath=str(ASSETS / "rain-gallery.glb"), export_format="GLB", use_selection=True, export_yup=True, export_cameras=True, export_lights=False, export_animations=False, export_extras=True, export_materials="EXPORT", export_tangents=True)
     position = scene.camera.location
     target = Vector(CAMERA_TARGET)
     fov = math.degrees(2 * math.atan((36 / 35) * (525 / 735) / 2))

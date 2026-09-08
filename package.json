@@ -9,6 +9,7 @@
     "test": "node --test web/tests/*.test.js",
     "validate:model": "node scripts/validate_glb.mjs",
     "build:offline": "node scripts/build_offline.mjs",
+    "build:catalog": "python3 scripts/verify_artifacts.py --write",
     "verify:artifacts": "python3 scripts/verify_artifacts.py"
   },
   "dependencies": {
