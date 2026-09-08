@@ -1,6 +1,0 @@
-{
-  "seed": 14092026,
-  "resolution": 1024,
-  "generator": "scripts/make_textures.py",
-  "source": "original deterministic procedural textures"
-}

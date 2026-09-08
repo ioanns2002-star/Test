@@ -1,9 +1,7 @@
 {
   "scripts": {
-    "setup": {"enabled": true, "command": "bash scripts/setup.sh"},
-    "run": {"enabled": true, "command": "npm run dev"}
-  },
-  "ports": {
-    "preview": 3000
+    "setup": { "enabled": false },
+    "run": { "enabled": false },
+    "archive": { "enabled": false }
   }
 }
